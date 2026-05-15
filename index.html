@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <meta name="description" content="Karate Training Reference - Full syllabus with Japanese terms, pronunciation and technique details.">
+    <title>Karate • Training Reference</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "Karate Training Reference",
+        "short_name": "Karate",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f8fafc",
+        "theme_color": "#111827",
+        "description": "Complete Karate syllabus with pronunciation guides",
+        "icons": [
+            {
+                "src": "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2748%27 fill=%27%23dc2626%27/%3E%3Ctext x=%2750%27 y=%2765%27 font-size=%2750%27 text-anchor=%27middle%27 fill=%27white%27%3E🥋%3C/text%3E%3C/svg%27",
+                "sizes": "192x192",
+                "type": "image/svg+xml"
+            }
+        ]
+    }'>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8fafc; margin:0; color:#1e293b; }
+        .technique-card { transition: transform 0.1s ease; }
+        .technique-card:active { transform: scale(0.98); }
+        .pronunciation { 
+    background:#1e293b; 
+    color:#e0e7ff; 
+    font-family: ui-monospace, monospace; 
+    cursor: pointer; 
+    transition: background 0.2s ease;
+}
+.pronunciation:active { 
+    background: #334155; 
+}
+        .belt-header:active { background:#f1f5f9; }
+        .install-btn {
+            background: #111827;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .install-btn:hover { background: #1e293b; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="background:white; border-bottom:1px solid #e2e8f0; padding:16px; position:sticky; top:0; z-index:100;">
+        <div style="max-width:640px; margin:0 auto; padding:0 16px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:#dc2626; border-radius:16px; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-fist-raised" style="color:white; font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px; font-weight:700;">Karate</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:-2px;">Training Reference</div>
+                </div>
+            </div>
+            
+            <!-- Install Button -->
+            <button id="install-btn" onclick="installPWA()" style="display:none;" class="install-btn">
+                <i class="fa-solid fa-download"></i>
+                <span>Install App</span>
+            </button>
+        </div>
+    </div>
+
+    <div style="max-width:640px; margin:0 auto; padding:16px 16px 40px;">
+        <!-- Count + Search -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px;">
+            <div>
+                <div id="total-count" style="font-size:32px; font-weight:700;">92</div>
+                <div style="font-size:12px; color:#64748b;">techniques • 10th Kyu → 3rd Dan</div>
+            </div>
+            <div style="width:180px;">
+                <input id="search-input" type="text" placeholder="Search techniques..." onkeyup="filterTechniques()"
+                       style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:9999px; font-size:15px;">
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto;">
+            <div onclick="filterByType('all')" id="filter-all" style="padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:600; background:#111827; color:white; white-space:nowrap; cursor:pointer;">All</div>
+            <div onclick="filterByType('strike')" id="filter-strike" style="padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:600; background:white; border:1px solid #e2e8f0; white-space:nowrap; cursor:pointer;">
+                <i class="fa-solid fa-hand-fist" style="color:#dc2626; margin-right:4px;"></i> Strikes
+            </div>
+            <div onclick="filterByType('block')" id="filter-block" style="padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:600; background:white; border:1px solid #e2e8f0; white-space:nowrap; cursor:pointer;">
+                <i class="fa-solid fa-shield-halved" style="color:#2563eb; margin-right:4px;"></i> Blocks
+            </div>
+            <div onclick="filterByType('kick')" id="filter-kick" style="padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:600; background:white; border:1px solid #e2e8f0; white-space:nowrap; cursor:pointer;">
+                <i class="fa-solid fa-shoe-prints" style="color:#d97706; margin-right:4px;"></i> Kicks
+            </div>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        let currentFilter = 'all';
+
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) installBtn.style.display = 'flex';
+        });
+
+        function installPWA() {
+            const installBtn = document.getElementById('install-btn');
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    if (installBtn) installBtn.style.display = 'none';
+                });
+            } else {
+                alert("To install: Tap the browser menu (⋮) → 'Add to Home screen' or 'Install app'");
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript;base64,' + btoa(`
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('activate', e => self.clients.claim());
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(
+                            caches.match(e.request).then(response => response || fetch(e.request))
+                        );
+                    });
+                `)).catch(() => {});
+            });
+        }
+
+        // Full Syllabus Data (92 techniques)
+        const syllabus = {
+            "10th Kyu (Red)": {
+                title: "10th Kyu (Red) • 7 Techniques",
+                items: [
+                    { type: "strike", name: "Jodan Tsuki", english: "Upper Punch", phonetic: "joh-dahn tsoo-kee", note: "Punch aimed at face / head level" },
+                    { type: "strike", name: "Chudan Tsuki", english: "Middle Punch", phonetic: "choo-dahn tsoo-kee", note: "Punch aimed at solar plexus / midsection" },
+                    { type: "strike", name: "Gedan Tsuki", english: "Lower Punch", phonetic: "geh-dahn tsoo-kee", note: "Punch aimed at groin / lower abdomen" },
+                    { type: "block", name: "Jodan Uke", english: "Upper Block", phonetic: "joh-dahn oo-keh", note: "Upper deflection block to protect the head" },
+                    { type: "block", name: "Mae Gedan Barai", english: "Lower Block", phonetic: "my gedahn bah-rye", note: "Lower sweeping block" },
+                    { type: "kick", name: "Hiza Geri", english: "Knee Kick", phonetic: "hee-zah geh-ree", note: "Knee strike aimed at groin or thigh" },
+                    { type: "kick", name: "Mae Geri Chudan", english: "Middle Front Kick", phonetic: "my geh-ree choo-dahn", note: "Front kick using ball of foot to solar plexus / midsection" }
+                ]
+            },
+            "9th Kyu (Yellow)": {
+                title: "9th Kyu (Yellow) • 8 Techniques",
+                items: [
+                    { type: "strike", name: "Ago Uchi", english: "Snap Punch to Jaw", phonetic: "ah-goh oo-chee", note: "Fast snap punch aimed at the jaw" },
+                    { type: "strike", name: "Uraken Shomen Uchi", english: "Backfist to Front", phonetic: "oo-rah-ken show-men oo-chee", note: "Backfist strike aimed at face or jaw" },
+                    { type: "strike", name: "Uraken Sayu Uchi", english: "Backfist to Side", phonetic: "oo-rah-ken sah-yoo oo-chee", note: "Backfist strike aimed at side of head or face" },
+                    { type: "strike", name: "Uraken Hizo Uchi", english: "Backfist to Rear", phonetic: "oo-rah-ken hee-zoh oo-chee", note: "Backfist strike aimed at rear or kidney area" },
+                    { type: "block", name: "Chudan Uchi Uke", english: "Middle Block", phonetic: "choo-dahn oo-chee oo-keh", note: "Inside to outside middle block" },
+                    { type: "kick", name: "Kin Geri", english: "Groin Flick Kick", phonetic: "keen geh-ree", note: "Fast instep flick kick aimed at groin" },
+                    { type: "kick", name: "Mae Keage", english: "Straight Leg Kick", phonetic: "my keh-ah-geh", note: "Straight leg kick aimed at midsection or groin" },
+                    { type: "kick", name: "Mae Geri Jodan", english: "Front Kick to Head", phonetic: "my geh-ree joh-dahn", note: "Front kick using ball of foot aimed at head" }
+                ]
+            },
+            "8th Kyu (Blue)": {
+                title: "8th Kyu (Blue) • 6 Techniques",
+                items: [
+                    { type: "strike", name: "Jun Tsuki", english: "Lunge Punch", phonetic: "joon tsoo-kee", note: "Lunge punch aimed at solar plexus" },
+                    { type: "strike", name: "Tate Tsuki Jodan", english: "Vertical Fist Upper", phonetic: "tah-teh tsoo-kee joh-dahn", note: "Vertical fist punch aimed at face" },
+                    { type: "strike", name: "Tate Tsuki Chudan", english: "Vertical Fist Middle", phonetic: "tah-teh tsoo-kee choo-dahn", note: "Vertical fist punch aimed at solar plexus" },
+                    { type: "strike", name: "Tate Tsuki Gedan", english: "Vertical Fist Lower", phonetic: "tah-teh tsoo-kee geh-dahn", note: "Vertical fist punch aimed at groin / lower body" },
+                    { type: "block", name: "Soto Uke", english: "Roundhouse Block", phonetic: "soh-toh oo-keh", note: "Outside roundhouse block" },
+                    { type: "kick", name: "Mawashi Geri Gedan", english: "Low Roundhouse Kick", phonetic: "mah-wah-shee geh-ree geh-dahn", note: "Roundhouse kick aimed at thigh or leg" }
+                ]
+            },
+            "7th Kyu (Orange)": {
+                title: "7th Kyu (Orange) • 5 Techniques",
+                items: [
+                    { type: "strike", name: "Tettsui Komi Kami Uchi", english: "Hammer Fist to Temple", phonetic: "tet-tsoo-ee koh-mee kah-mee oo-chee", note: "Hammer fist strike aimed at temple" },
+                    { type: "strike", name: "Tettsui Oroshi", english: "Descending Hammer Fist", phonetic: "tet-tsoo-ee oh-roh-shee", note: "Overhead hammer fist aimed at top of head or forehead" },
+                    { type: "strike", name: "Tettsui Hizo", english: "Hammer Fist to Side", phonetic: "tet-tsoo-ee hee-zoh", note: "Hammer fist strike aimed at floating ribs" },
+                    { type: "block", name: "Shuto Mawashi Uke", english: "Knife-hand Roundhouse Block", phonetic: "shoo-toh mah-wah-shee oo-keh", note: "Circular knife-hand block" },
+                    { type: "kick", name: "Mawashi Geri Chudan", english: "Middle Roundhouse Kick", phonetic: "mah-wah-shee geh-ree choo-dahn", note: "Roundhouse kick aimed at solar plexus or ribs" },
+                    { type: "kick", name: "Yoko Geri Chudan", english: "Side Kick (Middle)", phonetic: "yoh-koh geh-ree choo-dahn", note: "Side kick aimed at solar plexus or ribs" }
+                ]
+            },
+            "6th Kyu (Purple/White)": {
+                title: "6th Kyu (Purple/White) • 11 Techniques",
+                items: [
+                    { type: "strike", name: "Shotei Uchi Jodan", english: "Palm Heel Strike (Upper)", phonetic: "show-tay oo-chee joh-dahn", note: "Palm heel strike aimed at chin or face" },
+                    { type: "strike", name: "Shotei Uchi Chudan", english: "Palm Heel Strike (Middle)", phonetic: "show-tay oo-chee choo-dahn", note: "Palm heel strike aimed at solar plexus or chest" },
+                    { type: "strike", name: "Shotei Uchi Gedan", english: "Palm Heel Strike (Lower)", phonetic: "show-tay oo-chee geh-dahn", note: "Palm heel strike aimed at groin or lower body" },
+                    { type: "strike", name: "Gyaku Tsuki Jodan", english: "Reverse Punch (Upper)", phonetic: "gyah-koo tsoo-kee joh-dahn", note: "Reverse punch aimed at face" },
+                    { type: "strike", name: "Gyaku Tsuki Chudan", english: "Reverse Punch (Middle)", phonetic: "gyah-koo tsoo-kee choo-dahn", note: "Reverse punch aimed at solar plexus" },
+                    { type: "strike", name: "Gyaku Tsuki Gedan", english: "Reverse Punch (Lower)", phonetic: "gyah-koo tsoo-kee geh-dahn", note: "Reverse punch aimed at groin or lower body" },
+                    { type: "block", name: "Shotei Uke Jodan", english: "Palm Heel Block (Upper)", phonetic: "show-tay oo-keh joh-dahn", note: "Palm heel block deflecting upper attacks" },
+                    { type: "block", name: "Shotei Uke Chudan", english: "Palm Heel Block (Middle)", phonetic: "show-tay oo-keh choo-dahn", note: "Palm heel block deflecting middle attacks" },
+                    { type: "block", name: "Shotei Uke Gedan", english: "Palm Heel Block (Lower)", phonetic: "show-tay oo-keh geh-dahn", note: "Palm heel block deflecting lower attacks" },
+                    { type: "kick", name: "Mawashi Soto Keage", english: "Outside-to-in Kick", phonetic: "mah-wah-shee soh-toh keh-ah-geh", note: "Outside to inside kick aimed at groin or inner thigh" },
+                    { type: "kick", name: "Mawashi Uchi Keage", english: "Inside-to-out Kick", phonetic: "mah-wah-shee oo-chee keh-ah-geh", note: "Inside to outside kick aimed at groin or inner thigh" },
+                    { type: "kick", name: "Ushiro Geri", english: "Back Kick", phonetic: "oo-shee-roh geh-ree", note: "Back kick aimed at solar plexus or stomach (heel)" }
+                ]
+            },
+            "5th Kyu (Purple)": {
+                title: "5th Kyu (Purple) • 8 Techniques",
+                items: [
+                    { type: "strike", name: "Shuto Yoko Ganmen Uchi", english: "Knife Hand to Temple", phonetic: "shoo-toh yoh-koh gahn-men oo-chee", note: "Roundhouse knife hand strike aimed at temple" },
+                    { type: "strike", name: "Shuto Sakotsu Uchi", english: "Knife Hand to Collarbone", phonetic: "shoo-toh sah-koh-tsoo oo-chee", note: "Descending knife hand strike aimed at collarbone" },
+                    { type: "strike", name: "Shuto Hizo Uchi", english: "Knife Hand to Ribs", phonetic: "shoo-toh hee-zoh oo-chee", note: "Knife hand strike aimed at floating ribs" },
+                    { type: "strike", name: "Shuto Uchi Uchi", english: "Double Knife Hand Strike", phonetic: "shoo-toh oo-chee oo-chee", note: "Knife hand strike aimed at head" },
+                    { type: "strike", name: "Shuto Uchi Komi", english: "Knife Hand Strike", phonetic: "shoo-toh oo-chee koh-mee", note: "Knife hand strike aimed at collarbone or solar plexus" },
+                    { type: "block", name: "Mawashi Gedan Barai", english: "Circular Lower Block", phonetic: "mah-wah-shee geh-dahn bah-rye", note: "Circular lower block in Kiba Dachi" },
+                    { type: "kick", name: "Soto Oroshi Kakato Geri", english: "Outside-to-in Heel Kick", phonetic: "soh-toh oh-roh-shee kah-kah-toh geh-ree", note: "Outside to inside heel kick aimed at head or collarbone" },
+                    { type: "kick", name: "Uchi Oroshi Kakato Geri", english: "Inside-to-out Heel Kick", phonetic: "oo-chee oh-roh-shee kah-kah-toh geh-ree", note: "Inside to outside heel kick aimed at head or collarbone" },
+                    { type: "kick", name: "Yoko Geri Gedan", english: "Low Side Kick", phonetic: "yoh-koh geh-ree geh-dahn", note: "Side kick aimed at knee or thigh" }
+                ]
+            },
+            "4th Kyu (Green)": {
+                title: "4th Kyu (Green) • 7 Techniques",
+                items: [
+                    { type: "strike", name: "Tettsui Yoko Uchi Jodan", english: "Side Hammer Fist (Upper)", phonetic: "tet-tsoo-ee yoh-koh oo-chee joh-dahn", note: "Side hammer fist strike aimed at head" },
+                    { type: "strike", name: "Tettsui Yoko Uchi Chudan", english: "Side Hammer Fist (Middle)", phonetic: "tet-tsoo-ee yoh-koh oo-chee choo-dahn", note: "Side hammer fist strike aimed at ribs" },
+                    { type: "strike", name: "Tettsui Yoko Uchi Gedan", english: "Side Hammer Fist (Lower)", phonetic: "tet-tsoo-ee yoh-koh oo-chee geh-dahn", note: "Side hammer fist strike aimed at groin" },
+                    { type: "block", name: "Kake Uke Jodan", english: "Hooking Block (Upper)", phonetic: "kah-keh oo-keh joh-dahn", note: "Open hand hooking block (upper level)" },
+                    { type: "block", name: "Kake Uke Chudan", english: "Hooking Block (Middle)", phonetic: "kah-keh oo-keh choo-dahn", note: "Open hand hooking block (middle level)" },
+                    { type: "kick", name: "Kakato Geri Jodan", english: "Heel Kick (Upper)", phonetic: "kah-kah-toh geh-ree joh-dahn", note: "Heel kick aimed at head" },
+                    { type: "kick", name: "Kakato Geri Chudan", english: "Heel Kick (Middle)", phonetic: "kah-kah-toh geh-ree choo-dahn", note: "Heel kick aimed at solar plexus" },
+                    { type: "kick", name: "Kakato Geri Gedan", english: "Heel Kick (Lower)", phonetic: "kah-kah-toh geh-ree geh-dahn", note: "Heel kick aimed at groin or knee" }
+                ]
+            },
+            "3rd Kyu (Brown/White)": {
+                title: "3rd Kyu (Brown/White) • 9 Techniques",
+                items: [
+                    { type: "strike", name: "Hiji Ate Jodan", english: "Elbow Strike (Upper)", phonetic: "hee-jee ah-teh joh-dahn", note: "Elbow strike aimed at face or head" },
+                    { type: "strike", name: "Hiji Ate Chudan", english: "Elbow Strike (Middle)", phonetic: "hee-jee ah-teh choo-dahn", note: "Elbow strike aimed at solar plexus" },
+                    { type: "strike", name: "Hiji Ate Ago", english: "Elbow Strike to Jaw", phonetic: "hee-jee ah-teh ah-goh", note: "Elbow strike aimed at jaw" },
+                    { type: "strike", name: "Hiji Ate Ushiro", english: "Elbow Strike to Rear", phonetic: "hee-jee ah-teh oo-shee-roh", note: "Elbow strike aimed behind" },
+                    { type: "strike", name: "Hiji Ate Oroshi", english: "Descending Elbow Strike", phonetic: "hee-jee ah-teh oh-roh-shee", note: "Overhead elbow strike aimed at top of head" },
+                    { type: "strike", name: "Hiji Ate Mae", english: "Elbow Strike to Chest", phonetic: "hee-jee ah-teh my", note: "Elbow strike aimed at chest" },
+                    { type: "kick", name: "Uchi Haisoku Geri", english: "Instep Kick", phonetic: "oo-chee hy-soh-koo geh-ree", note: "Instep kick aimed across the face" },
+                    { type: "kick", name: "Kake Geri Kakato", english: "Hook Kick (Heel)", phonetic: "kah-keh geh-ree kah-kah-toh", note: "Hook kick aimed at head using heel" },
+                    { type: "kick", name: "Kake Geri Chusoku", english: "Hook Kick (Ball of Foot)", phonetic: "kah-keh geh-ree choo-soh-koo", note: "Hook kick aimed at head using ball of foot" }
+                ]
+            },
+            "2nd Kyu (Brown)": {
+                title: "2nd Kyu (Brown) • 5 Techniques",
+                items: [
+                    { type: "strike", name: "Haito Uchi Jodan", english: "Ridge Hand Strike (Upper)", phonetic: "hy-toh oo-chee joh-dahn", note: "Ridge hand strike aimed at temple or side of head" },
+                    { type: "strike", name: "Haito Uchi Chudan", english: "Ridge Hand Strike (Middle)", phonetic: "hy-toh oo-chee choo-dahn", note: "Ridge hand strike aimed at ribs or solar plexus" },
+                    { type: "strike", name: "Haito Uchi Gedan", english: "Ridge Hand Strike (Lower)", phonetic: "hy-toh oo-chee geh-dahn", note: "Ridge hand strike aimed at groin" },
+                    { type: "kick", name: "Ushiro Mawashi Geri", english: "Spinning Roundhouse Kick", phonetic: "oo-shee-roh mah-wah-shee geh-ree", note: "Spinning roundhouse kick aimed at head" },
+                    { type: "kick", name: "Ushiro Kake Geri", english: "Spinning Hook Kick", phonetic: "oo-shee-roh kah-keh geh-ree", note: "Spinning hook kick aimed at head" }
+                ]
+            },
+            "1st Dan (Black)": {
+                title: "1st Dan (Black) • 6 Techniques",
+                items: [
+                    { type: "strike", name: "Ryoken Tsuki Oroshi", english: "Two-Knuckle Fist (Descending)", phonetic: "ryoh-ken tsoo-kee oh-roh-shee", note: "Two-knuckle fist strike aimed at top of head" },
+                    { type: "strike", name: "Ryoken Tsuki Jodan", english: "Two-Knuckle Fist (Upper)", phonetic: "ryoh-ken tsoo-kee joh-dahn", note: "Two-knuckle fist strike aimed at face" },
+                    { type: "strike", name: "Ryoken Tsuki Chudan", english: "Two-Knuckle Fist (Middle)", phonetic: "ryoh-ken tsoo-kee choo-dahn", note: "Two-knuckle fist strike aimed at solar plexus" },
+                    { type: "block", name: "Sune Uke Soto", english: "Shin Block (Outside)", phonetic: "soo-neh oo-keh soh-toh", note: "Shin block from outside to inside" },
+                    { type: "block", name: "Sune Uke Uchi", english: "Shin Block (Inside)", phonetic: "soo-neh oo-keh oo-chee", note: "Shin block from inside to outside" },
+                    { type: "kick", name: "Tobi Yoko Geri", english: "Jumping Side Kick", phonetic: "toh-bee yoh-koh geh-ree", note: "Jumping side kick aimed at solar plexus or ribs" },
+                    { type: "kick", name: "Tobi Mawashi Geri", english: "Jumping Roundhouse Kick", phonetic: "toh-bee mah-wah-shee geh-ree", note: "Jumping roundhouse kick aimed at head" }
+                ]
+            },
+            "2nd Dan (Black)": {
+                title: "2nd Dan (Black) • 8 Techniques",
+                items: [
+                    { type: "strike", name: "Koken Uchi Jodan", english: "Wrist / Arc Fist Strike (Upper)", phonetic: "koh-ken oo-chee joh-dahn", note: "Wrist strike aimed at temple or head" },
+                    { type: "strike", name: "Koken Uchi Chudan", english: "Wrist / Arc Fist Strike (Middle)", phonetic: "koh-ken oo-chee choo-dahn", note: "Wrist strike aimed at ribs or solar plexus" },
+                    { type: "strike", name: "Koken Uchi Gedan", english: "Wrist / Arc Fist Strike (Lower)", phonetic: "koh-ken oo-chee geh-dahn", note: "Wrist strike aimed at groin" },
+                    { type: "strike", name: "Toho Uchi", english: "Windpipe Strike", phonetic: "toh-hoh oo-chee", note: "Strike or grab aimed at throat / windpipe" },
+                    { type: "strike", name: "Keiko Uchi", english: "Fingertip Strike (Eyes)", phonetic: "keh-koh oo-chee", note: "Fingertip strike aimed at eyes" },
+                    { type: "kick", name: "Tobi Ushiro Geri", english: "Jumping Spinning Back Kick", phonetic: "toh-bee oo-shee-roh geh-ree", note: "Jumping spinning back kick aimed at solar plexus or back" },
+                    { type: "kick", name: "Tobi Kake Geri Kakato", english: "Jumping Hook Kick (Heel)", phonetic: "toh-bee kah-keh geh-ree kah-kah-toh", note: "Jumping hook kick aimed at head (heel)" },
+                    { type: "kick", name: "Tobi Kake Geri Chusoku", english: "Jumping Hook Kick (Ball of Foot)", phonetic: "toh-bee kah-keh geh-ree choo-soh-koo", note: "Jumping hook kick aimed at head (ball of foot)" }
+                ]
+            },
+            "3rd Dan (Black)": {
+                title: "3rd Dan (Black) • 7 Techniques",
+                items: [
+                    { type: "strike", name: "Ipponken Uchi Jodan", english: "One-Knuckle Strike (Upper)", phonetic: "eep-pon-ken oo-chee joh-dahn", note: "One-knuckle strike aimed at eyes or face" },
+                    { type: "strike", name: "Ipponken Uchi Chudan", english: "One-Knuckle Strike (Middle)", phonetic: "eep-pon-ken oo-chee choo-dahn", note: "One-knuckle strike aimed at solar plexus" },
+                    { type: "strike", name: "Nakayubi Ipponken Uchi Jodan", english: "Middle Knuckle Strike (Upper)", phonetic: "nah-kah-yoo-bee eep-pon-ken oo-chee joh-dahn", note: "Middle knuckle strike aimed at face" },
+                    { type: "strike", name: "Nakayubi Ipponken Uchi Chudan", english: "Middle Knuckle Strike (Middle)", phonetic: "nah-kah-yoo-bee eep-pon-ken oo-chee choo-dahn", note: "Middle knuckle strike aimed at solar plexus" },
+                    { type: "strike", name: "Oyayubiken Jodan", english: "Thumb Knuckle Strike (Upper)", phonetic: "oh-yah-yoo-bee-ken joh-dahn", note: "Thumb knuckle strike aimed at face" },
+                    { type: "strike", name: "Oyayubiken Chudan", english: "Thumb Knuckle Strike (Middle)", phonetic: "oh-yah-yoo-bee-ken choo-dahn", note: "Thumb knuckle strike aimed at solar plexus" },
+                    { type: "kick", name: "Tobi Ushiro Mawashi Geri", english: "Jumping Spinning Roundhouse", phonetic: "toh-bee oo-shee-roh mah-wah-shee geh-ree", note: "Jumping spinning roundhouse kick aimed at head" }
+                ]
+            }
+        };
+
+        function updateCount() {
+            const visible = document.querySelectorAll('.technique-card:not([style*="display: none"])').length;
+            document.getElementById('total-count').textContent = visible;
+        }
+
+        function filterTechniques() {
+            const term = document.getElementById('search-input').value.toLowerCase();
+            document.querySelectorAll('.technique-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(term) ? '' : 'none';
+            });
+            updateCount();
+        }
+
+        function filterByType(type) {
+            if (currentFilter === type && type !== 'all') {
+                type = 'all';
+            }
+            currentFilter = type;
+
+            ['all','strike','block','kick'].forEach(t => {
+                const el = document.getElementById('filter-' + t);
+                if (el) {
+                    if (t === type || (type === 'all' && t === 'all')) {
+                        el.style.background = '#111827';
+                        el.style.color = 'white';
+                    } else {
+                        el.style.background = 'white';
+                        el.style.color = '#1e293b';
+                    }
+                }
+            });
+
+            document.querySelectorAll('.technique-card').forEach(card => {
+                if (type === 'all') {
+                    card.style.display = '';
+                } else {
+                    card.style.display = card.dataset.type === type ? '' : 'none';
+                }
+            });
+            updateCount();
+        }
+
+        function renderAll() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            Object.keys(syllabus).forEach(key => {
+                const belt = syllabus[key];
+                let html = `<div style="margin-bottom:24px;">
+                    <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? '' : 'none'" 
+                         style="background:white; padding:12px 16px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border:1px solid #e2e8f0;">
+                        <div style="font-weight:700; font-size:15px;">${belt.title}</div>
+                        <div style="color:#64748b; font-size:13px;">${belt.items.length} techniques ▼</div>
+                    </div>
+                    <div style="margin-top:8px;">`;
+
+                belt.items.forEach(item => {
+                    const icon = item.type === 'strike' ? 'fa-hand-fist' : item.type === 'block' ? 'fa-shield-halved' : 'fa-shoe-prints';
+                    const color = item.type === 'strike' ? '#dc2626' : item.type === 'block' ? '#2563eb' : '#d97706';
+                    
+                    html += `
+                    <div class="technique-card" data-type="${item.type}" style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                            <i class="fa-solid ${icon}" style="color:${color};"></i>
+                            <div style="font-weight:700;">${item.name}</div>
+                        </div>
+                        <div style="font-size:13px; color:#64748b; margin-bottom:4px;">${item.english}</div>
+                        
+                        <div class="pronunciation" style="padding:6px 10px; border-radius:8px; font-size:13px; display:flex; align-items:center; gap:6px; background:#111827; color:white;">
+                            <span>${item.phonetic}</span>
+                        </div>
+                        
+                        <div style="font-size:12px; color:#64748b; margin-top:6px;">${item.note}</div>
+                    </div>`;
+                });
+
+                html += `</div></div>`;
+                container.innerHTML += html;
+            });
+            updateCount();
+        }
+
+        function initialize() {
+            renderAll();
+            currentFilter = 'all';
+            
+            // Show install button hint
+            setTimeout(() => {
+                const btn = document.getElementById('install-btn');
+                if (btn && btn.style.display === 'none' && !deferredPrompt) {
+                    // Can add subtle hint here if desired
+                }
+            }, 8000);
+        }
+
+        window.onload = initialize;
+    </script>
+</body>
+</html>
