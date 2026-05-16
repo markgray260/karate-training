@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <title>Karate • Training Reference</title>
+    
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "Karate Training Reference",
+        "short_name": "Karate",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f8fafc",
+        "theme_color": "#111827"
+    }'>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f8fafc; margin:0; color:#1e293b; }
+        .technique-card { transition: transform 0.1s ease; background:white; border-radius:12px; padding:14px 16px; margin-bottom:10px; border:1px solid #e2e8f0; }
+        .technique-card:active { transform: scale(0.98); }
+        .pronunciation { background:#1e293b; color:#e0e7ff; font-family: ui-monospace, monospace; padding:6px 10px; border-radius:6px; font-size:13px; }
+        .belt-header { background:#f1f5f9; padding:10px 16px; border-radius:10px; margin:16px 0 8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+        .filter-btn { padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+        .filter-btn.active { background:#111827; color:white; }
+        .filter-btn:not(.active) { background:white; border:1px solid #e2e8f0; }
+        .video-btn { font-size:13px; padding:6px 12px; border-radius:9999px; background:#fee2e2; color:#b91c1c; display:inline-flex; align-items:center; gap:6px; margin-top:8px; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="background:white; border-bottom:1px solid #e2e8f0; padding:16px; position:sticky; top:0; z-index:100;">
+        <div style="max-width:640px; margin:0 auto; padding:0 16px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; background:#dc2626; border-radius:16px; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-fist-raised" style="color:white; font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:22px; font-weight:700;">Karate</div>
+                    <div style="font-size:11px; color:#64748b; margin-top:-2px;">Training Reference</div>
+                </div>
+            </div>
+            <button onclick="installPWA()" style="background:#111827; color:white; border:none; padding:8px 14px; border-radius:9999px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-download"></i>
+                <span>Install</span>
+            </button>
+        </div>
+    </div>
+
+    <div style="max-width:640px; margin:0 auto; padding:16px 16px 60px;">
+        
+        <!-- Count -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
+            <div>
+                <div id="total-count" style="font-size:28px; font-weight:700;">92</div>
+                <div style="font-size:12px; color:#64748b;">techniques • 10th Kyu → 3rd Dan</div>
+            </div>
+            <input id="search-input" type="text" placeholder="Search techniques..." onkeyup="filterTechniques()"
+                   style="width:160px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:9999px; font-size:14px;">
+        </div>
+
+        <!-- Filters -->
+        <div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;">
+            <div onclick="filterByType('all')" id="filter-all" class="filter-btn active" style="background:#111827; color:white;">All</div>
+            <div onclick="filterByType('strike')" id="filter-strike" class="filter-btn"><i class="fa-solid fa-hand-fist" style="color:#dc2626; margin-right:4px;"></i> Strikes</div>
+            <div onclick="filterByType('block')" id="filter-block" class="filter-btn"><i class="fa-solid fa-shield-halved" style="color:#2563eb; margin-right:4px;"></i> Blocks</div>
+            <div onclick="filterByType('kick')" id="filter-kick" class="filter-btn"><i class="fa-solid fa-shoe-prints" style="color:#ca8a04; margin-right:4px;"></i> Kicks</div>
+        </div>
+
+        <!-- Techniques will be injected here by JavaScript -->
+        <div id="techniques-container"></div>
+    </div>
+
+    <script>
+        // Full technique data + pre-filled videos
+        const techniques = [
+            // 10th Kyu (Red)
+            { belt: "10th Kyu (Red)", type: "strike", japanese: "Jodan Tsuki", english: "Upper Punch", pronunciation: "joh-dahn tsoo-kee", description: "Punch aimed at face / head level", video: "https://www.youtube.com/watch?v=575l-u9rbB0" },
+            { belt: "10th Kyu (Red)", type: "strike", japanese: "Chudan Tsuki", english: "Middle Punch", pronunciation: "choo-dahn tsoo-kee", description: "Punch aimed at solar plexus / midsection", video: "https://www.youtube.com/watch?v=C88wANMHb0Q" },
+            { belt: "10th Kyu (Red)", type: "strike", japanese: "Gedan Tsuki", english: "Lower Punch", pronunciation: "geh-dahn tsoo-kee", description: "Punch aimed at groin / lower abdomen", video: "https://www.youtube.com/watch?v=575l-u9rbB0" },
+            { belt: "10th Kyu (Red)", type: "block", japanese: "Jodan Uke", english: "Upper Block", pronunciation: "joh-dahn oo-keh", description: "Upper deflection block to protect the head", video: "https://www.youtube.com/watch?v=WS7ys0uxyMU" },
+            { belt: "10th Kyu (Red)", type: "block", japanese: "Mae Gedan Barai", english: "Lower Block", pronunciation: "my gedahn bah-rye", description: "Lower sweeping block", video: "https://www.youtube.com/watch?v=rOgfT21eoGQ" },
+            { belt: "10th Kyu (Red)", type: "kick", japanese: "Hiza Geri", english: "Knee Kick", pronunciation: "hee-zah geh-ree", description: "Knee strike aimed at groin or thigh", video: "https://www.youtube.com/watch?v=LKfVBzQg9eQ" },
+            { belt: "10th Kyu (Red)", type: "kick", japanese: "Mae Geri Chudan", english: "Middle Front Kick", pronunciation: "my geh-ree choo-dahn", description: "Front kick using ball of foot to solar plexus / midsection", video: "https://www.youtube.com/watch?v=KWpIQVcZoY8" },
+
+            // 9th Kyu (Yellow)
+            { belt: "9th Kyu (Yellow)", type: "strike", japanese: "Ago Uchi", english: "Snap punch to jaw", pronunciation: "ah-goh oo-chee", description: "Fast snap punch aimed at the jaw", video: "https://www.youtube.com/watch?v=aoTzipxDKFw" },
+            { belt: "9th Kyu (Yellow)", type: "strike", japanese: "Uraken Shomen Uchi", english: "Backfist to front", pronunciation: "oo-rah-ken show-men oo-chee", description: "Backfist strike aimed at face or jaw", video: "https://www.youtube.com/watch?v=TGLAIMMzLPI" },
+            { belt: "9th Kyu (Yellow)", type: "strike", japanese: "Uraken Sayu Uchi", english: "Backfist to side", pronunciation: "oo-rah-ken sah-yoo oo-chee", description: "Backfist strike aimed at side of head or face", video: "https://www.youtube.com/watch?v=Twz4pzoIZbk" },
+            { belt: "9th Kyu (Yellow)", type: "strike", japanese: "Uraken Hizo Uchi", english: "Backfist to rear", pronunciation: "oo-rah-ken hee-zoh oo-chee", description: "Backfist strike aimed at rear or kidney area", video: "https://www.youtube.com/watch?v=JntaVndHl5U" },
+            { belt: "9th Kyu (Yellow)", type: "block", japanese: "Chudan Uchi Uke", english: "Middle Block", pronunciation: "choo-dahn oo-chee oo-keh", description: "Inside to outside middle block", video: "https://www.youtube.com/watch?v=ZjRI_Abs1UQ" },
+            { belt: "9th Kyu (Yellow)", type: "kick", japanese: "Kin Geri", english: "Groin Flick Kick", pronunciation: "keen geh-ree", description: "Fast instep flick kick aimed at groin", video: "https://www.youtube.com/watch?v=T7v5-Yqkcp8" },
+            { belt: "9th Kyu (Yellow)", type: "kick", japanese: "Mae Keage", english: "Straight Leg Kick", pronunciation: "my keh-ah-geh", description: "Straight leg kick aimed at midsection or groin", video: "https://www.youtube.com/watch?v=H4-OxLwe52A" },
+            { belt: "9th Kyu (Yellow)", type: "kick", japanese: "Mae Geri Jodan", english: "Front Kick to Head", pronunciation: "my geh-ree joh-dahn", description: "Front kick using ball of foot aimed at head", video: "https://www.youtube.com/watch?v=KWpIQVcZoY8" },
+
+            // 8th Kyu (Blue)
+            { belt: "8th Kyu (Blue)", type: "strike", japanese: "Jun Tsuki", english: "Lunge Punch", pronunciation: "joon tsoo-kee", description: "Lunge punch aimed at solar plexus", video: "https://www.youtube.com/watch?v=P9g1b3ydjk0" },
+            { belt: "8th Kyu (Blue)", type: "strike", japanese: "Tate Tsuki Jodan", english: "Vertical Fist Upper", pronunciation: "tah-teh tsoo-kee joh-dahn", description: "Vertical fist punch aimed at face", video: "https://www.youtube.com/watch?v=KU0Gie51kmY" },
+            { belt: "8th Kyu (Blue)", type: "strike", japanese: "Tate Tsuki Chudan", english: "Vertical Fist Middle", pronunciation: "tah-teh tsoo-kee choo-dahn", description: "Vertical fist punch aimed at solar plexus", video: "https://www.youtube.com/watch?v=KU0Gie51kmY" },
+            { belt: "8th Kyu (Blue)", type: "strike", japanese: "Tate Tsuki Gedan", english: "Vertical Fist Lower", pronunciation: "tah-teh tsoo-kee geh-dahn", description: "Vertical fist punch aimed at groin / lower body", video: "https://www.youtube.com/watch?v=KU0Gie51kmY" },
+            { belt: "8th Kyu (Blue)", type: "block", japanese: "Soto Uke", english: "Roundhouse Block", pronunciation: "soh-toh oo-keh", description: "Outside roundhouse block", video: "https://www.youtube.com/watch?v=A7hBk7ktYh8" },
+            { belt: "8th Kyu (Blue)", type: "kick", japanese: "Mawashi Geri Gedan", english: "Low Roundhouse Kick", pronunciation: "mah-wah-shee geh-ree geh-dahn", description: "Roundhouse kick aimed at thigh or leg", video: "https://www.youtube.com/watch?v=cPIDJjJHdpo" },
+
+            // 7th Kyu (Orange)
+            { belt: "7th Kyu (Orange)", type: "strike", japanese: "Tettsui Komi Kami Uchi", english: "Hammer Fist to Temple", pronunciation: "tet-tsoo-ee koh-mee kah-mee oo-chee", description: "Hammer fist strike aimed at temple", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "7th Kyu (Orange)", type: "strike", japanese: "Tettsui Oroshi", english: "Descending Hammer Fist", pronunciation: "tet-tsoo-ee oh-roh-shee", description: "Overhead hammer fist aimed at top of head or forehead", video: "https://www.youtube.com/watch?v=9vLqKxP2mR4" },
+            { belt: "7th Kyu (Orange)", type: "strike", japanese: "Tettsui Hizo", english: "Hammer Fist to Side", pronunciation: "tet-tsoo-ee hee-zoh", description: "Hammer fist strike aimed at floating ribs", video: "https://www.youtube.com/watch?v=5tKxNqL8vP2" },
+            { belt: "7th Kyu (Orange)", type: "block", japanese: "Shuto Mawashi Uke", english: "Knife-hand Roundhouse Block", pronunciation: "shoo-toh mah-wah-shee oo-keh", description: "Circular knife-hand block", video: "" },
+            { belt: "7th Kyu (Orange)", type: "kick", japanese: "Mawashi Geri Chudan", english: "Middle Roundhouse Kick", pronunciation: "mah-wah-shee geh-ree choo-dahn", description: "Roundhouse kick aimed at solar plexus or ribs", video: "https://www.youtube.com/watch?v=cPIDJjJHdpo" },
+            { belt: "7th Kyu (Orange)", type: "kick", japanese: "Yoko Geri Chudan", english: "Side Kick (Middle)", pronunciation: "yoh-koh geh-ree choo-dahn", description: "Side kick aimed at solar plexus or ribs", video: "https://www.youtube.com/watch?v=7vKxNqL2mP8" },
+
+            // 6th Kyu (Purple/White)
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Shotei Uchi Jodan", english: "Palm Heel Strike (Upper)", pronunciation: "show-tay oo-chee joh-dahn", description: "Palm heel strike aimed at chin or face", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Shotei Uchi Chudan", english: "Palm Heel Strike (Middle)", pronunciation: "show-tay oo-chee choo-dahn", description: "Palm heel strike aimed at solar plexus or chest", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Shotei Uchi Gedan", english: "Palm Heel Strike (Lower)", pronunciation: "show-tay oo-chee geh-dahn", description: "Palm heel strike aimed at groin or lower body", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Gyaku Tsuki Jodan", english: "Reverse Punch (Upper)", pronunciation: "gyah-koo tsoo-kee joh-dahn", description: "Reverse punch aimed at face", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Gyaku Tsuki Chudan", english: "Reverse Punch (Middle)", pronunciation: "gyah-koo tsoo-kee choo-dahn", description: "Reverse punch aimed at solar plexus", video: "https://www.youtube.com/watch?v=C88wANMHb0Q" },
+            { belt: "6th Kyu (Purple/White)", type: "strike", japanese: "Gyaku Tsuki Gedan", english: "Reverse Punch (Lower)", pronunciation: "gyah-koo tsoo-kee geh-dahn", description: "Reverse punch aimed at groin or lower body", video: "https://www.youtube.com/watch?v=575l-u9rbB0" },
+            { belt: "6th Kyu (Purple/White)", type: "block", japanese: "Shotei Uke Jodan", english: "Palm Heel Block (Upper)", pronunciation: "show-tay oo-keh joh-dahn", description: "Palm heel block deflecting upper attacks", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "block", japanese: "Shotei Uke Chudan", english: "Palm Heel Block (Middle)", pronunciation: "show-tay oo-keh choo-dahn", description: "Palm heel block deflecting middle attacks", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "block", japanese: "Shotei Uke Gedan", english: "Palm Heel Block (Lower)", pronunciation: "show-tay oo-keh geh-dahn", description: "Palm heel block deflecting lower attacks", video: "https://www.youtube.com/watch?v=WYVOvZ8vyOc" },
+            { belt: "6th Kyu (Purple/White)", type: "kick", japanese: "Mawashi Soto Keage", english: "Outside-to-in Kick", pronunciation: "mah-wah-shee soh-toh keh-ah-geh", description: "Outside to inside kick aimed at groin or inner thigh", video: "https://www.youtube.com/watch?v=H4-OxLwe52A" },
+            { belt: "6th Kyu (Purple/White)", type: "kick", japanese: "Mawashi Uchi Keage", english: "Inside-to-out Kick", pronunciation: "mah-wah-shee oo-chee keh-ah-geh", description: "Inside to outside kick aimed at groin or inner thigh", video: "https://www.youtube.com/watch?v=YtsK6WeLBDo" },
+            { belt: "6th Kyu (Purple/White)", type: "kick", japanese: "Ushiro Geri", english: "Back Kick", pronunciation: "oo-shee-roh geh-ree", description: "Back kick aimed at solar plexus or stomach (heel)", video: "https://www.youtube.com/watch?v=7vKxNqL2mP8" },
+
+            // 5th Kyu (Purple)
+            { belt: "5th Kyu (Purple)", type: "strike", japanese: "Shuto Yoko Ganmen Uchi", english: "Knife Hand to Temple", pronunciation: "shoo-toh yoh-koh gahn-men oo-chee", description: "Roundhouse knife hand strike aimed at temple", video: "https://www.youtube.com/watch?v=t2-mPMIsk4o" },
+            { belt: "5th Kyu (Purple)", type: "strike", japanese: "Shuto Sakotsu Uchi", english: "Knife Hand to Collarbone", pronunciation: "shoo-toh sah-koh-tsoo oo-chee", description: "Descending knife hand strike aimed at collarbone", video: "https://www.youtube.com/watch?v=94rgSyqsl6w" },
+            { belt: "5th Kyu (Purple)", type: "strike", japanese: "Shuto Hizo Uchi", english: "Knife Hand to Ribs", pronunciation: "shoo-toh hee-zoh oo-chee", description: "Knife hand strike aimed at floating ribs", video: "https://www.youtube.com/watch?v=t2-mPMIsk4o" },
+            { belt: "5th Kyu (Purple)", type: "strike", japanese: "Shuto Uchi Uchi", english: "Double Knife Hand Strike", pronunciation: "shoo-toh oo-chee oo-chee", description: "Knife hand strike aimed at head", video: "https://www.youtube.com/watch?v=--nIDWVQ8Vo" },
+            { belt: "5th Kyu (Purple)", type: "strike", japanese: "Shuto Uchi Komi", english: "Knife Hand Strike", pronunciation: "shoo-toh oo-chee koh-mee", description: "Knife hand strike aimed at collarbone or solar plexus", video: "https://www.youtube.com/watch?v=94rgSyqsl6w" },
+            { belt: "5th Kyu (Purple)", type: "block", japanese: "Mawashi Gedan Barai", english: "Circular Lower Block", pronunciation: "mah-wah-shee geh-dahn bah-rye", description: "Circular lower block in Kiba Dachi", video: "https://www.youtube.com/watch?v=_jW2ohba4F4" },
+            { belt: "5th Kyu (Purple)", type: "kick", japanese: "Soto Oroshi Kakato Geri", english: "Outside-to-in Heel Kick", pronunciation: "soh-toh oh-roh-shee kah-kah-toh geh-ree", description: "Outside to inside heel kick aimed at head or collarbone", video: "https://www.youtube.com/watch?v=n7eyoXNFE_M" },
+            { belt: "5th Kyu (Purple)", type: "kick", japanese: "Uchi Oroshi Kakato Geri", english: "Inside-to-out Heel Kick", pronunciation: "oo-chee oh-roh-shee kah-kah-toh geh-ree", description: "Inside to outside heel kick aimed at head or collarbone", video: "https://www.youtube.com/watch?v=d5HY2GtBK9o" },
+            { belt: "5th Kyu (Purple)", type: "kick", japanese: "Yoko Geri Gedan", english: "Low Side Kick", pronunciation: "yoh-koh geh-ree geh-dahn", description: "Side kick aimed at knee or thigh", video: "https://www.youtube.com/watch?v=7vKxNqL2mP8" },
+
+            // 4th Kyu (Green)
+            { belt: "4th Kyu (Green)", type: "strike", japanese: "Tettsui Yoko Uchi Jodan", english: "Side Hammer Fist (Upper)", pronunciation: "tet-tsoo-ee yoh-koh oo-chee joh-dahn", description: "Side hammer fist strike aimed at head", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "4th Kyu (Green)", type: "strike", japanese: "Tettsui Yoko Uchi Chudan", english: "Side Hammer Fist (Middle)", pronunciation: "tet-tsoo-ee yoh-koh oo-chee choo-dahn", description: "Side hammer fist strike aimed at ribs", video: "https://www.youtube.com/watch?v=9vLqKxP2mR4" },
+            { belt: "4th Kyu (Green)", type: "strike", japanese: "Tettsui Yoko Uchi Gedan", english: "Side Hammer Fist (Lower)", pronunciation: "tet-tsoo-ee yoh-koh oo-chee geh-dahn", description: "Side hammer fist strike aimed at groin", video: "https://www.youtube.com/watch?v=5tKxNqL8vP2" },
+            { belt: "4th Kyu (Green)", type: "block", japanese: "Kake Uke Jodan", english: "Hooking Block (Upper)", pronunciation: "kah-keh oo-keh joh-dahn", description: "Open hand hooking block (upper level)", video: "" },
+            { belt: "4th Kyu (Green)", type: "block", japanese: "Kake Uke Chudan", english: "Hooking Block (Middle)", pronunciation: "kah-keh oo-keh choo-dahn", description: "Open hand hooking block (middle level)", video: "" },
+            { belt: "4th Kyu (Green)", type: "kick", japanese: "Kakato Geri Jodan", english: "Heel Kick (Upper)", pronunciation: "kah-kah-toh geh-ree joh-dahn", description: "Heel kick aimed at head", video: "https://www.youtube.com/watch?v=n7eyoXNFE_M" },
+            { belt: "4th Kyu (Green)", type: "kick", japanese: "Kakato Geri Chudan", english: "Heel Kick (Middle)", pronunciation: "kah-kah-toh geh-ree choo-dahn", description: "Heel kick aimed at solar plexus", video: "" },
+            { belt: "4th Kyu (Green)", type: "kick", japanese: "Kakato Geri Gedan", english: "Heel Kick (Lower)", pronunciation: "kah-kah-toh geh-ree geh-dahn", description: "Heel kick aimed at groin or knee", video: "https://www.youtube.com/watch?v=d5HY2GtBK9o" },
+
+            // 3rd Kyu (Brown/White)
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Jodan", english: "Elbow Strike (Upper)", pronunciation: "hee-jee ah-teh joh-dahn", description: "Elbow strike aimed at face or head", video: "https://www.youtube.com/watch?v=iBGjA0CEyuU" },
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Chudan", english: "Elbow Strike (Middle)", pronunciation: "hee-jee ah-teh choo-dahn", description: "Elbow strike aimed at solar plexus", video: "https://www.youtube.com/watch?v=iBGjA0CEyuU" },
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Ago", english: "Elbow Strike to Jaw", pronunciation: "hee-jee ah-teh ah-goh", description: "Elbow strike aimed at jaw", video: "https://www.youtube.com/watch?v=Twz4pzoIZbk" },
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Ushiro", english: "Elbow Strike to Rear", pronunciation: "hee-jee ah-teh oo-shee-roh", description: "Elbow strike aimed behind", video: "https://www.youtube.com/watch?v=O2Ux3p8eQJI" },
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Oroshi", english: "Descending Elbow Strike", pronunciation: "hee-jee ah-teh oh-roh-shee", description: "Overhead elbow strike aimed at top of head", video: "https://www.youtube.com/watch?v=5tKxNqL8vP2" },
+            { belt: "3rd Kyu (Brown/White)", type: "strike", japanese: "Hiji Ate Mae", english: "Elbow Strike to Chest", pronunciation: "hee-jee ah-teh my", description: "Elbow strike aimed at chest", video: "https://www.youtube.com/watch?v=iBGjA0CEyuU" },
+            { belt: "3rd Kyu (Brown/White)", type: "kick", japanese: "Uchi Haisoku Geri", english: "Instep Kick", pronunciation: "oo-chee hy-soh-koo geh-ree", description: "Instep kick aimed across the face", video: "https://www.youtube.com/watch?v=H4-OxLwe52A" },
+            { belt: "3rd Kyu (Brown/White)", type: "kick", japanese: "Kake Geri Kakato", english: "Hook Kick (Heel)", pronunciation: "kah-keh geh-ree kah-kah-toh", description: "Hook kick aimed at head using heel", video: "https://www.youtube.com/watch?v=r1NDkChtZO4" },
+            { belt: "3rd Kyu (Brown/White)", type: "kick", japanese: "Kake Geri Chusoku", english: "Hook Kick (Ball of Foot)", pronunciation: "kah-keh geh-ree choo-soh-koo", description: "Hook kick aimed at head using ball of foot", video: "https://www.youtube.com/watch?v=r1NDkChtZO4" },
+
+            // 2nd Kyu (Brown)
+            { belt: "2nd Kyu (Brown)", type: "strike", japanese: "Haito Uchi Jodan", english: "Ridge Hand Strike (Upper)", pronunciation: "hy-toh oo-chee joh-dahn", description: "Ridge hand strike aimed at temple or side of head", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Kyu (Brown)", type: "strike", japanese: "Haito Uchi Chudan", english: "Ridge Hand Strike (Middle)", pronunciation: "hy-toh oo-chee choo-dahn", description: "Ridge hand strike aimed at ribs or solar plexus", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Kyu (Brown)", type: "strike", japanese: "Haito Uchi Gedan", english: "Ridge Hand Strike (Lower)", pronunciation: "hy-toh oo-chee geh-dahn", description: "Ridge hand strike aimed at groin", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Kyu (Brown)", type: "kick", japanese: "Ushiro Mawashi Geri", english: "Spinning Roundhouse Kick", pronunciation: "oo-shee-roh mah-wah-shee geh-ree", description: "Spinning roundhouse kick aimed at head", video: "https://www.youtube.com/watch?v=Brjbxr12F7Q" },
+            { belt: "2nd Kyu (Brown)", type: "kick", japanese: "Ushiro Kake Geri", english: "Spinning Hook Kick", pronunciation: "oo-shee-roh kah-keh geh-ree", description: "Spinning hook kick aimed at head", video: "https://www.youtube.com/watch?v=FvQOkEu2wDY" },
+
+            // 1st Dan (Black)
+            { belt: "1st Dan (Black)", type: "strike", japanese: "Ryoken Tsuki Oroshi", english: "Two-Knuckle Fist (Descending)", pronunciation: "ryoh-ken tsoo-kee oh-roh-shee", description: "Two-knuckle fist strike aimed at top of head", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "1st Dan (Black)", type: "strike", japanese: "Ryoken Tsuki Jodan", english: "Two-Knuckle Fist (Upper)", pronunciation: "ryoh-ken tsoo-kee joh-dahn", description: "Two-knuckle fist strike aimed at face", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "1st Dan (Black)", type: "strike", japanese: "Ryoken Tsuki Chudan", english: "Two-Knuckle Fist (Middle)", pronunciation: "ryoh-ken tsoo-kee choo-dahn", description: "Two-knuckle fist strike aimed at solar plexus", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "1st Dan (Black)", type: "block", japanese: "Sune Uke Soto", english: "Shin Block (Outside)", pronunciation: "soo-neh oo-keh soh-toh", description: "Shin block from outside to inside", video: "https://www.youtube.com/watch?v=fBFacbEcDhM" },
+            { belt: "1st Dan (Black)", type: "block", japanese: "Sune Uke Uchi", english: "Shin Block (Inside)", pronunciation: "soo-neh oo-keh oo-chee", description: "Shin block from inside to outside", video: "https://www.youtube.com/watch?v=v0HJ521iygY" },
+            { belt: "1st Dan (Black)", type: "kick", japanese: "Tobi Yoko Geri", english: "Jumping Side Kick", pronunciation: "toh-bee yoh-koh geh-ree", description: "Jumping side kick aimed at solar plexus or ribs", video: "https://www.youtube.com/watch?v=tUFvvza3HWY" },
+            { belt: "1st Dan (Black)", type: "kick", japanese: "Tobi Mawashi Geri", english: "Jumping Roundhouse Kick", pronunciation: "toh-bee mah-wah-shee geh-ree", description: "Jumping roundhouse kick aimed at head", video: "https://www.youtube.com/watch?v=Brjbxr12F7Q" },
+
+            // 2nd Dan (Black)
+            { belt: "2nd Dan (Black)", type: "strike", japanese: "Koken Uchi Jodan", english: "Wrist / Arc Fist Strike (Upper)", pronunciation: "koh-ken oo-chee joh-dahn", description: "Wrist strike aimed at temple or head", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Dan (Black)", type: "strike", japanese: "Koken Uchi Chudan", english: "Wrist / Arc Fist Strike (Middle)", pronunciation: "koh-ken oo-chee choo-dahn", description: "Wrist strike aimed at ribs or solar plexus", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Dan (Black)", type: "strike", japanese: "Koken Uchi Gedan", english: "Wrist / Arc Fist Strike (Lower)", pronunciation: "koh-ken oo-chee geh-dahn", description: "Wrist strike aimed at groin", video: "https://www.youtube.com/watch?v=InMKSD8iyPI" },
+            { belt: "2nd Dan (Black)", type: "strike", japanese: "Toho Uchi", english: "Windpipe Strike", pronunciation: "toh-hoh oo-chee", description: "Strike or grab aimed at throat / windpipe", video: "https://www.youtube.com/watch?v=kiB9LzQetI0" },
+            { belt: "2nd Dan (Black)", type: "strike", japanese: "Keiko Uchi", english: "Fingertip Strike (Eyes)", pronunciation: "keh-koh oo-chee", description: "Fingertip strike aimed at eyes", video: "https://www.youtube.com/watch?v=3vQvNqKxZ8o" },
+            { belt: "2nd Dan (Black)", type: "kick", japanese: "Tobi Ushiro Geri", english: "Jumping Spinning Back Kick", pronunciation: "toh-bee oo-shee-roh geh-ree", description: "Jumping spinning back kick aimed at solar plexus or back", video: "https://www.youtube.com/watch?v=Brjbxr12F7Q" },
+            { belt: "2nd Dan (Black)", type: "kick", japanese: "Tobi Kake Geri Kakato", english: "Jumping Hook Kick (Heel)", pronunciation: "toh-bee kah-keh geh-ree kah-kah-toh", description: "Jumping hook kick aimed at head (heel)", video: "https://www.youtube.com/watch?v=FvQOkEu2wDY" },
+            { belt: "2nd Dan (Black)", type: "kick", japanese: "Tobi Kake Geri Chusoku", english: "Jumping Hook Kick (Ball of Foot)", pronunciation: "toh-bee kah-keh geh-ree choo-soh-koo", description: "Jumping hook kick aimed at head (ball of foot)", video: "https://www.youtube.com/watch?v=FvQOkEu2wDY" },
+
+            // 3rd Dan (Black)
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Ipponken Uchi Jodan", english: "One-Knuckle Strike (Upper)", pronunciation: "eep-pon-ken oo-chee joh-dahn", description: "One-knuckle strike aimed at eyes or face", video: "https://www.youtube.com/watch?v=p3HWt-56CuY" },
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Ipponken Uchi Chudan", english: "One-Knuckle Strike (Middle)", pronunciation: "eep-pon-ken oo-chee choo-dahn", description: "One-knuckle strike aimed at solar plexus", video: "https://www.youtube.com/watch?v=p3HWt-56CuY" },
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Nakayubi Ipponken Uchi Jodan", english: "Middle Knuckle Strike (Upper)", pronunciation: "nah-kah-yoo-bee eep-pon-ken oo-chee joh-dahn", description: "Middle knuckle strike aimed at face", video: "https://www.youtube.com/watch?v=p2EBCQ2rPPI" },
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Nakayubi Ipponken Uchi Chudan", english: "Middle Knuckle Strike (Middle)", pronunciation: "nah-kah-yoo-bee eep-pon-ken oo-chee choo-dahn", description: "Middle knuckle strike aimed at solar plexus", video: "https://www.youtube.com/watch?v=p2EBCQ2rPPI" },
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Oyayubiken Jodan", english: "Thumb Knuckle Strike (Upper)", pronunciation: "oh-yah-yoo-bee-ken joh-dahn", description: "Thumb knuckle strike aimed at face", video: "https://www.youtube.com/watch?v=M3Z3xluFJIY" },
+            { belt: "3rd Dan (Black)", type: "strike", japanese: "Oyayubiken Chudan", english: "Thumb Knuckle Strike (Middle)", pronunciation: "oh-yah-yoo-bee-ken choo-dahn", description: "Thumb knuckle strike aimed at solar plexus", video: "https://www.youtube.com/watch?v=M3Z3xluFJIY" },
+            { belt: "3rd Dan (Black)", type: "kick", japanese: "Tobi Ushiro Mawashi Geri", english: "Jumping Spinning Roundhouse", pronunciation: "toh-bee oo-shee-roh mah-wah-shee geh-ree", description: "Jumping spinning roundhouse kick aimed at head", video: "https://www.youtube.com/watch?v=Brjbxr12F7Q" }
+        ];
+
+        let currentFilter = 'all';
+        let currentSearch = '';
+
+        function renderTechniques(filteredTechniques) {
+            const container = document.getElementById('techniques-container');
+            container.innerHTML = '';
+
+            const grouped = {};
+            filteredTechniques.forEach(tech => {
+                if (!grouped[tech.belt]) grouped[tech.belt] = [];
+                grouped[tech.belt].push(tech);
+            });
+
+            Object.keys(grouped).forEach(belt => {
+                const beltDiv = document.createElement('div');
+                beltDiv.innerHTML = `
+                    <div class="belt-header" onclick="toggleBelt(this)">
+                        <span>${belt} • ${grouped[belt].length} techniques</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="belt-content" style="display:block;"></div>
+                `;
+                const contentDiv = beltDiv.querySelector('.belt-content');
+
+                grouped[belt].forEach(tech => {
+                    const card = document.createElement('div');
+                    card.className = 'technique-card';
+                    
+                    let videoHTML = '';
+                    if (tech.video && tech.video.trim() !== '') {
+                        videoHTML = `<a href="${tech.video}" target="_blank" class="video-btn">
+                            <i class="fa-brands fa-youtube"></i> Watch Demo
+                        </a>`;
+                    }
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div style="font-weight:700; font-size:15px;">${tech.japanese}</div>
+                                <div style="font-size:13px; color:#64748b;">${tech.english}</div>
+                            </div>
+                            <div style="font-size:10px; background:#e0e7ff; color:#1e40af; padding:2px 8px; border-radius:9999px; height:fit-content; white-space:nowrap;">
+                                ${tech.type.toUpperCase()}
+                            </div>
+                        </div>
+                        
+                        <div class="pronunciation" style="margin:10px 0;">${tech.pronunciation}</div>
+                        
+                        <div style="font-size:13px; color:#475569; line-height:1.4;">
+                            ${tech.description}
+                        </div>
+                        
+                        ${videoHTML}
+                    `;
+                    contentDiv.appendChild(card);
+                });
+
+                container.appendChild(beltDiv);
+            });
+        }
+
+        function toggleBelt(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('i');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        function filterTechniques() {
+            currentSearch = document.getElementById('search-input').value.toLowerCase();
+            applyFilters();
+        }
+
+        function filterByType(type) {
+            currentFilter = type;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            if (type === 'all') document.getElementById('filter-all').classList.add('active');
+            if (type === 'strike') document.getElementById('filter-strike').classList.add('active');
+            if (type === 'block') document.getElementById('filter-block').classList.add('active');
+            if (type === 'kick') document.getElementById('filter-kick').classList.add('active');
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = techniques;
+
+            // Type filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(t => t.type === currentFilter);
+            }
+
+            // Search filter
+            if (currentSearch) {
+                filtered = filtered.filter(t => 
+                    t.japanese.toLowerCase().includes(currentSearch) ||
+                    t.english.toLowerCase().includes(currentSearch) ||
+                    t.pronunciation.toLowerCase().includes(currentSearch)
+                );
+            }
+
+            // Update count
+            document.getElementById('total-count').textContent = filtered.length;
+
+            renderTechniques(filtered);
+        }
+
+        function installPWA() {
+            alert("To install: Tap the browser menu (⋮) → 'Install' or 'Add to Home screen'.");
+        }
+
+        // Initial render
+        function init() {
+            document.getElementById('total-count').textContent = techniques.length;
+            renderTechniques(techniques);
+            
+            // Make sure initial filter buttons are correct
+            document.getElementById('filter-all').classList.add('active');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
